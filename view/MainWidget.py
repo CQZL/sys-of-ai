@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-# @Time : 2025/1/10 14:35
-# @Author : Li Desheng
-# @File : mainWidget.py
-# @Project : Interfaces
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -19,22 +15,10 @@ class MainWidget(QWidget):
         self.current_scale_factor = 1  # 当前缩放因子，默认为1（未缩放）
         self.center_statue = 1
         self.rotate_time = 0
-        self.init_win()
         self.init_control()
 
-    def init_win(self):
-        self.setWindowTitle("宫颈癌病理界面1.0")
-        self.setWindowIcon(QIcon("img/view.png"))
-        self.setStyleSheet("""
-            background-color: black;
-            color: white;
-        """)
-        '''
-        # 全屏
-        screen = QApplication.primaryScreen()
-        geometry = screen.availableGeometry()
-        self.setGeometry(geometry)
-        '''
+
+
     def init_control(self):
         # 总布局
         self.totallayout = QHBoxLayout()
@@ -47,12 +31,11 @@ class MainWidget(QWidget):
         self.left_column_top = QHBoxLayout()
 
         # 1.1.1添加返回按钮
-        self.back_button = QPushButton("返回上一菜单")
-        self.left_column_top.addWidget(self.back_button)
-        self.back_button.setFlat(True)  #设置扁平化
-        self.back_button.resize(200, 80) #设置大小
-        self.back_button.clicked.connect(self.InfoWin.init_win)
-        self.back_button.setStyleSheet("""
+        self.show_queue_btn = QPushButton("返回上一菜单")
+        self.left_column_top.addWidget(self.show_queue_btn)
+        self.show_queue_btn.setFlat(True)  #设置扁平化
+        self.show_queue_btn.resize(200, 80) #设置大小
+        self.show_queue_btn.setStyleSheet("""
             QPushButton {
                 background-color: #0000FF;
                 color: white;
@@ -74,10 +57,11 @@ class MainWidget(QWidget):
 
 
         # 5个图片按钮
-        icon_names = ["icon/cut.png", "icon/puzzle.png", "icon/rotation.png", "icon/picture.png", "icon/report.png"]
+        icon_names = ["F:/宫颈AI辅助诊断系统/icon/cut.png", "F:/宫颈AI辅助诊断系统/icon/puzzle.png", "F:/宫颈AI辅助诊断系统/icon/rotation.png", "F:/宫颈AI辅助诊断系统/icon/picture.png", "F:/宫颈AI辅助诊断系统/icon/report.png"]
         for index, icon_name in enumerate(icon_names):
             button = QPushButton()
             button.setIcon(QIcon(icon_name))
+            button.setFixedSize(30, 30)  # 设置按钮固定大小以更好显示图标
             button.setIconSize(QSize(20, 20))  # 设置图标大小
             self.left_column_top.addWidget(button)
             button.clicked.connect(lambda: self.reset_center_status())
@@ -142,27 +126,13 @@ class MainWidget(QWidget):
             self.rotate_image()
         elif index == 3:
             # 打开文件对话框以选择图片
-            filename, _ = QFileDialog.getOpenFileName(self, "选择图片", "", "Images (*.png *.xpm *.jpg *.tif)")
-            #添加读取tif文件格式的图片
-            try:
-                self.image_data = tifffile.imread(filename)
-                self.height, self.width, channel = self.image_data.shape
-                bytesPerLine = 3 * self.width
-                qImg = QImage(self.image_data.data, self.width, self.height, bytesPerLine,
-                              QImage.Format_RGB888).rgbSwapped()
-                pixmap = QPixmap.fromImage(qImg)
-                self.original_pixmap = pixmap
-                self.current_pixmap = pixmap
-                self.current_scale_factor = 1
-                scaled_pixmap = pixmap.scaled(self.image_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-                self.image_label.setPixmap(scaled_pixmap)
-            except Exception as e:
-                print(f"加载TIF文件失败: {e}")
+            self.lead_image()
+            print("leading")
         else:
             print("report")
     # 根据按钮的索引来判断哪个按钮被点击
 
-    def rotate_image(self):
+    def rotate_image(self): # 旋转图片按钮
         # 顺时针旋转90度并适应image_label的大小
         if hasattr(self, 'original_pixmap'):
             # 获取原始pixmap并根据当前缩放因子调整大小
@@ -198,7 +168,27 @@ class MainWidget(QWidget):
             # 设置最终的图片到QLabel
             self.image_label.setPixmap(target_pixmap)
 
-    def scale_image(self, factor):
+    def lead_image(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "选择图片", "", "Images (*.png *.xpm *.jpg *.tif)")
+        print(type(filename))
+        #
+        # 添加读取tif文件格式的图片
+        try:
+            self.image_data = tifffile.imread(filename)
+            self.height, self.width, channel = self.image_data.shape
+            bytesPerLine = 3 * self.width
+            qImg = QImage(self.image_data.data, self.width, self.height, bytesPerLine,
+                          QImage.Format_RGB888).rgbSwapped()
+            pixmap = QPixmap.fromImage(qImg)
+            self.original_pixmap = pixmap
+            self.current_pixmap = pixmap
+            self.current_scale_factor = 1
+            scaled_pixmap = pixmap.scaled(self.image_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+            self.image_label.setPixmap(scaled_pixmap)
+        except Exception as e:
+            print(f"加载TIF文件失败: {e}")
+
+    def scale_image(self, factor):  # 图片倍数放大缩小
         if hasattr(self, 'original_pixmap'):
             # 确保基于原始图像尺寸进行缩放
             original_width = self.original_pixmap.width()

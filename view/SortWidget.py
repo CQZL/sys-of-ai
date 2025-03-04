@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-# @Time : 2025/1/11 14:02
-# @Author : Li Desheng
-# @File : SortWidget.py
-# @Project : Interfaces
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *

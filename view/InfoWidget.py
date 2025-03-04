@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# @Time : 2025/1/11 11:12
-# @Author : Li Desheng
-# @File : LabelWidget.py
-# @Project : Interfaces
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
+
+
 from view.SortWidget import SortWidget
 from view.ResultWidget import ResultWidget
 from view.PatientWidget import PatientWidget
@@ -18,26 +16,9 @@ class InfoWidget(QWidget):
         self.sortWin = SortWidget()
         self.resultWin = ResultWidget()
         self.patientWin = PatientWidget()
-        self.init_win()
         self.init_control()
 
-    def init_win(self):
-        """初始化窗口属性"""
-        self.setWindowTitle("Medical Info System")
-        self.setGeometry(0, 0, 800, 600)
-        self.setStyleSheet("""
-            QPushButton {
-                border: 2px solid gray;
-                background-color: gray; 
-            }
-            QPushButton:hover {
-                border: 2px solid darkgray;
-            }
-            QPushButton:pressed, QPushButton:checked {
-                background-color: blue; 
-                border: 2px solid black; 
-            }
-        """)
+        #RunModel()
 
     def init_control(self):
         # 总布局
@@ -60,16 +41,60 @@ class InfoWidget(QWidget):
         # 1.2.1左中 - 按钮组
         button_layout = QHBoxLayout()
         self.button_sort = QPushButton("整体排序")
-        self.button_sort.setFixedSize(60, 25)
+        self.button_sort.setFixedSize(60, 40)
         self.button_result = QPushButton("检测结果")
-        self.button_result.setFixedSize(60, 25)
+        self.button_result.setFixedSize(60, 40)
         self.button_patient = QPushButton("病人信息")
-        self.button_patient.setFixedSize(60, 25)
+        self.button_patient.setFixedSize(60, 40)
+
+        # 为按钮设置最小宽度
+        self.button_sort.setMinimumWidth(120)
+        self.button_result.setMinimumWidth(120)
+        self.button_patient.setMinimumWidth(120)
+
+        # 定义一个通用的样式字符串
+        common_button_style = """
+            /* 正常状态下的 QPushButton 样式 */
+            QPushButton {
+                background-color: #696969; /* 浅灰色背景，比白色更柔和 */
+                color: black; 
+                border: none;
+                font-weight: bold;
+                font-size: 14px;
+                border-radius: 5px;
+                padding: 4px 4px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+                transition: background-color 0.3s ease, border-color 0.3s ease; /* 添加过渡效果 */
+            }
+            /* 鼠标悬停在 QPushButton 上时的样式 */
+            QPushButton:hover {
+                background-color: #e0e0e0; /* 更浅的灰色背景 */
+                border: 1px solid #999999;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 悬停时阴影加深 */
+            }
+            /* 鼠标按下 QPushButton 时的样式 */
+            QPushButton:pressed {
+                background-color: red; /* 按下时更深的灰色背景 */
+                border: 1px solid #777777;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 按下时阴影变浅 */
+                transform: translateY(1px); /* 按下时按钮稍微下沉 */
+            }
+            /* 按钮获得焦点时的样式 */
+            QPushButton:focus {
+                outline: none; /* 去除默认的焦点边框 */
+                border: 1px solid #0078d7; /* 设置蓝色边框 */
+            }
+        """
+
+        # 为三个按钮分别设置样式
+        self.button_sort.setStyleSheet(common_button_style)
+        self.button_result.setStyleSheet(common_button_style)
+        self.button_patient.setStyleSheet(common_button_style)
 
         button_layout.addWidget(self.button_sort)
         button_layout.addWidget(self.button_result)
         button_layout.addWidget(self.button_patient)
-        button_layout.addStretch(1)
+#        button_layout.addStretch(1)
 
         # 创建一个QWidget作为按钮布局的容器，并设置其固定高度
         buttons_container = QWidget()
@@ -101,7 +126,7 @@ class InfoWidget(QWidget):
                 border: 2px solid white; 
             }
             QComboBox:hover { 
-                border-color: lightgray; 
+                border-color: #FF0000; 
             }
         """)
         self.box1.addItem("满意")
@@ -121,7 +146,7 @@ class InfoWidget(QWidget):
                 border: 2px solid white; 
             }
             QComboBox:hover { 
-                border-color: lightgray; 
+                border-color: #FF0000; 
             }
         """)
         self.box2.addItem(">5000个细胞")
@@ -163,8 +188,6 @@ class InfoWidget(QWidget):
         self.option2_1.toggled.connect(self.on_option_2_toggled)
         self.option2_2.toggled.connect(self.on_option_2_toggled)
         self.line1_left.addLayout(label4)
-
-
 
         # （5）炎症程度
         label5 = QHBoxLayout()
@@ -215,12 +238,12 @@ class InfoWidget(QWidget):
         self.selected_options_2 = {}
         # 选项列表
         options_1 = ["未见上皮内病变", "非典型鳞状细胞", "正常", "不能明确意义", "炎症",
-                   "倾向上皮细胞内高度病变", "表皮细胞萎缩", "倾向上皮内瘤变", "宫内节育器反应",
-                   "上皮内低度病变", "妊娠反应", "上皮内高度病变", "放疗反应", "CIN-II级",
-                   "其他", "CIN-III级", "鳞状细胞癌"]
+                     "倾向上皮细胞内高度病变", "表皮细胞萎缩", "倾向上皮内瘤变", "宫内节育器反应",
+                     "上皮内低度病变", "妊娠反应", "上皮内高度病变", "放疗反应", "CIN-II级",
+                     "其他", "CIN-III级", "鳞状细胞癌"]
 
         # 当前行的水平布局和计数器
-        current_h_layout_1 =QHBoxLayout()
+        current_h_layout_1 = QHBoxLayout()
         option_counter_1 = 0
         for option in options_1:
             checkbox_1 = QCheckBox(option)
@@ -254,8 +277,8 @@ class InfoWidget(QWidget):
         self.selected_options_3 = {}
         # 选项列表
         options_2 = ["非典型腺细胞", "腺癌", "非典型性腺细胞", "倾向原位腺癌", "宫颈管",
-                   "宫内膜", "不能明确意义", "宫内膜", "来源不明",
-                   "倾向良性反应性改变", "其他", "可疑腺癌"]
+                     "宫内膜", "不能明确意义", "宫内膜", "来源不明",
+                     "倾向良性反应性改变", "其他", "可疑腺癌"]
 
         # 当前行的水平布局和计数器
         current_h_layout_2 = QHBoxLayout()
@@ -374,6 +397,9 @@ class InfoWidget(QWidget):
         button_save = QPushButton("保存", self)
         button_diagnose = QPushButton("诊断", self)
 
+        #设置诊断按钮响应
+        button_diagnose.clicked.connect(self.on_diagnose_button_clicked)
+
         # 设置按钮固定大小
         fixed_size = (90, 40)  # 宽度100像素，高度50像素
         button_preview.setFixedSize(*fixed_size)
@@ -440,8 +466,6 @@ class InfoWidget(QWidget):
         # 添加右侧布局到主布局
         self.totallayout.addLayout(self.right_column, 1)
 
-
-
     def on_box1_changed(self, index):
         selected_text = self.box1.itemText(index)
         print(f"样本满意度: {selected_text}")
@@ -501,3 +525,9 @@ class InfoWidget(QWidget):
     def on_box_line_6_changed(self, index):
         selected_text = self.box_line_6.itemText(index)
         print(f"附注建议: {selected_text}")
+
+    def on_diagnose_button_clicked(self):
+        from view.RunModel import RunModel
+        self.run = RunModel()
+        self.run.run_model()
+

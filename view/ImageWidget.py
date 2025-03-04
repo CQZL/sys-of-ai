@@ -30,7 +30,13 @@ class ImageWidget(QWidget):
         label_text.setAlignment(Qt.AlignCenter)
         label_text.setFixedHeight(20)  # 固定高度
         label_text.setStyleSheet(
-            "border: none; padding: 0px; margin: 0px; background-color: white; color: black; font-size: 12px; font-family: Arial;"
+            "border: none; "
+            "padding: 0px; "
+            "margin: 0px; "
+            "background-color: white; "
+            "color: black; "
+            "font-size: 12px; "
+            "font-family: Arial;"
         )
 
         # 添加到布局
