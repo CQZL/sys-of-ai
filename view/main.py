@@ -5,8 +5,8 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QStackedWidget, QVBoxLayout, QWidget  # 添加QDialog导入
 from LoginDialog import LoginDialog
-from view.MainWidget import MainWidget
-from view.QueueWork import QueueWork
+from MainWidget import MainWidget
+from QueueWork import QueueWork
 
 
 class QueueAndMainWindow(QWidget):
@@ -34,7 +34,7 @@ class QueueAndMainWindow(QWidget):
         self.window_style()
 
     def window_style(self):
-        self.setWindowTitle("宫颈AI辅助系统")
+        self.setWindowTitle("宫颈癌细胞病理学AI辅助诊断系统")
         self.setStyleSheet("""
             QComboBox { 
                 border: 2px solid white; 
@@ -76,3 +76,5 @@ if __name__ == "__main__":
         sys.exit(app.exec())
     else:
         sys.exit(0)
+
+

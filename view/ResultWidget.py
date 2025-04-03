@@ -13,8 +13,7 @@ class ResultWidget(QWidget):
 
     def init_windows(self):
         """初始化窗口属性"""
-        self.setWindowTitle("Medical Info System")
-        self.setGeometry(300, 100, 800, 600)
+        pass
 
     def init_control(self):
         pass

@@ -1,17 +1,16 @@
-
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-
-from view.SortWidget import SortWidget
-from view.ResultWidget import ResultWidget
-from view.PatientWidget import PatientWidget
+from SortWidget import SortWidget
+from ResultWidget import ResultWidget
+from PatientWidget import PatientWidget
 
 
 class InfoWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.filename = None
         self.font = QFont("Arial", 12)
         self.sortWin = SortWidget()
         self.resultWin = ResultWidget()
@@ -32,11 +31,7 @@ class InfoWidget(QWidget):
         self.stacked_widget.addWidget(self.resultWin)
         self.stacked_widget.addWidget(self.patientWin)
 
-        # 1.1左上 图片信息区
-        self.left_column_top = QLabel("请选择图片...")
-        self.left_column_top.setFont(self.font)
-        self.left_column_top.setFixedHeight(15)
-        self.left_column.addWidget(self.left_column_top, 1)
+
 
         # 1.2.1左中 - 按钮组
         button_layout = QHBoxLayout()
@@ -56,7 +51,7 @@ class InfoWidget(QWidget):
         common_button_style = """
             /* 正常状态下的 QPushButton 样式 */
             QPushButton {
-                background-color: #696969; /* 浅灰色背景，比白色更柔和 */
+                background-color: #e0e0e0; /* 浅灰色背景，比白色更柔和 */
                 color: black; 
                 border: none;
                 font-weight: bold;
@@ -68,7 +63,7 @@ class InfoWidget(QWidget):
             }
             /* 鼠标悬停在 QPushButton 上时的样式 */
             QPushButton:hover {
-                background-color: #e0e0e0; /* 更浅的灰色背景 */
+                background-color: #696969; /* 更浅的灰色背景 */
                 border: 1px solid #999999;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 悬停时阴影加深 */
             }
@@ -94,7 +89,10 @@ class InfoWidget(QWidget):
         button_layout.addWidget(self.button_sort)
         button_layout.addWidget(self.button_result)
         button_layout.addWidget(self.button_patient)
-#        button_layout.addStretch(1)
+        #        button_layout.addStretch(1)
+
+        #为三个按钮分别设置响应
+        self.button_result.clicked.connect(self.pass_filename_to_patient)
 
         # 创建一个QWidget作为按钮布局的容器，并设置其固定高度
         buttons_container = QWidget()
@@ -527,7 +525,13 @@ class InfoWidget(QWidget):
         print(f"附注建议: {selected_text}")
 
     def on_diagnose_button_clicked(self):
-        from view.RunModel import RunModel
+        from RunModel import RunModel
         self.run = RunModel()
         self.run.run_model()
 
+    def receive_filename(self, filename):
+        self.filename = filename
+
+    def pass_filename_to_patient(self):
+        if self.filename:
+            self.patientWin.set_filename(self.filename)

@@ -1,98 +1,208 @@
-
+import os
+import pandas as pd
+from pathlib import Path
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-import os
-from view.ImageWidget import ImageWidget
+from ImageWidget import ImageWidget
+
 
 class PatientWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.font = QFont("Arial", 12)
-        self.data_dir = "data"  # 数据目录
-        self.init_windows()
-        self.init_control()
+        self.filename = None
+        self.current_page = 0
+        self.page_size = 18
+        self.image_paths = []
+        self.init_ui()
+        self.show_placeholder("请先选择图片文件")
 
-    def init_windows(self):
-        self.setWindowTitle("Medical Info System")
-        self.setGeometry(0, 0, 800, 600)
+    def init_ui(self):
+        # 主布局
+        self.main_layout = QVBoxLayout(self)
+        self.setLayout(self.main_layout)
+
+        # 图片显示区域
+        self.image_widget = QWidget()
+        self.image_layout = QGridLayout()
+        self.image_layout.setSpacing(0)
+        self.image_widget.setLayout(self.image_layout)
+        self.main_layout.addWidget(self.image_widget)
+
+        # 分页导航布局
+        self.pagination_layout = QHBoxLayout()
+        self.last_layout = QVBoxLayout()
+
+        # 上一页按钮
+        self.prev_page_button = QPushButton("上一页")
+        self.prev_page_button.clicked.connect(self.prev_page)
+        self.pagination_layout.addWidget(self.prev_page_button)
+
+        # 下一页按钮
+        self.next_page_button = QPushButton("下一页")
+        self.next_page_button.clicked.connect(self.next_page)
+        self.pagination_layout.addWidget(self.next_page_button)
+
+        # 输入框和跳转按钮
+        self.page_input = QLineEdit()
+        self.page_input.setMaximumWidth(50)
+        self.pagination_layout.addWidget(self.page_input)
+
+        self.go_button = QPushButton("跳转")
+        self.go_button.clicked.connect(self.go_to_page)
+        self.pagination_layout.addWidget(self.go_button)
 
 
-    def init_control(self):
-        # 总布局
-        self.totallayout = QHBoxLayout()
-        self.setLayout(self.totallayout)
 
-        # 左侧布局 - 堆栈与按钮列表
-        self.left_layout = QVBoxLayout()
-        self.left_layout.setAlignment(Qt.AlignTop)  # 确保按钮向上对齐
+        # 显示当前页和总页数的标签
+        self.page_info_label = QLabel()
+        self.last_layout.addWidget(self.page_info_label)
 
-        # 动态创建按钮，每个按钮对应一个子文件夹
-        if os.path.exists(self.data_dir) and os.path.isdir(self.data_dir):
-            for folder in sorted(os.listdir(self.data_dir)): # folder是文件名
-                folder_path = os.path.join(self.data_dir, folder)
-                if os.path.isdir(folder_path):
-                    button = QPushButton(folder, self)
-                    button.setFixedHeight(35)  # 设置固定高度
-                    button.clicked.connect(lambda *args, f=folder: self.on_folder_button_clicked(f))
+        self.main_layout.addLayout(self.last_layout)
+        self.main_layout.addLayout(self.pagination_layout)
 
-                    self.left_layout.addWidget(button)
-        else:
-            print("文件地址不存在")
 
-        # 右侧布局 - 图片展示区
-        self.right_widget = QWidget()
-        self.right_layout = QGridLayout()  # 使用网格布局
-        self.right_layout.setSpacing(0)  # 移除网格间距
-        self.right_widget.setLayout(self.right_layout)
+    def set_filename(self, filename: str):
+        """接收主界面传递的文件路径"""
+        self.filename = filename
+        print(f"接收到文件路径: {filename}")
+        csv_path = self._get_csv_path()
+        print(f"正在读取文件: {csv_path}")
 
-        # 添加到总布局
-        self.totallayout.addLayout(self.left_layout, 1)
-        self.totallayout.addWidget(self.right_widget, 5)
+        if not csv_path or not csv_path.exists():
+            print("未找到检测结果文件")
+            self.show_placeholder("未找到检测结果文件")
+            return
 
-    def on_folder_button_clicked(self, folder_name):
-        # 读取文件底下的图片
-        folder_path = os.path.join(self.data_dir, folder_name)
-        self.display_images(folder_path)
+        try:
+            # 读取CSV文件
+            print(f"正在读取文件: {csv_path}")
+            df = pd.read_csv(csv_path)
+            if df.empty:
+                self.show_placeholder("检测结果文件为空")
+                return
 
-    def display_images(self, folder_path):
+            # 获取第一列数据（排除表头）
+            self.image_paths = df.iloc[1:, 0].tolist()  # 假设第一行是表头
+            print(self.image_paths)
+            valid_paths = [p for p in self.image_paths if os.path.exists(p)]
+            print(valid_paths)
 
-        # 清除当前显示的所有图片和标签
-        while self.right_layout.count():
-            item = self.right_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
+            if not valid_paths:
+                self.show_placeholder("未找到有效图片路径")
+                return
 
-        # 显示新的图片
-        if os.path.exists(folder_path) and os.path.isdir(folder_path):
-            images = [img for img in sorted(os.listdir(folder_path)) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-            for idx, img_name in enumerate(images):
-                img_path = os.path.join(folder_path, img_name)
+            self.current_page = 0
+            self.update_page_info_label()
+            self.display_images()
 
-                # 创建包含图片和标题的小部件
-                image_widget = ImageWidget(img_path, img_name)
+        except Exception as e:
+            print(f"读取检测结果失败: {str(e)}")
+            self.show_placeholder(f"读取检测结果失败: {str(e)}")
 
-                # 使用网格布局添加控件
-                row = idx // 3  # 每行放3个元素
+    def _get_csv_path(self):
+        """生成CSV文件路径"""
+        if not self.filename:
+            return None
+
+        try:
+            path = Path(self.filename)
+            # 构建结果路径：原文件所在目录/原文件名_result/detection_result.csv
+            print(path)
+            print(path.parent / path.stem / "result" / "detection_results.csv")
+            return path.parent / path.stem / "result" / "detection_results.csv"
+        except Exception as e:
+            print(f"路径生成错误: {str(e)}")
+            return None
+
+    def display_images(self):
+        """显示当前页的图片列表"""
+        # 清空现有内容
+        while self.image_layout.count():
+            item = self.image_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        start_index = self.current_page * self.page_size
+        end_index = start_index + self.page_size
+        current_page_paths = self.image_paths[start_index:end_index]
+
+        if not current_page_paths:
+            self.show_placeholder("没有更多图片")
+            return
+
+        for idx, img_path in enumerate(current_page_paths):
+            try:
+                image_widget = ImageWidget(img_path, os.path.basename(img_path))
+                row = idx // 3  # 每行3张图片
                 col = idx % 3
-                self.right_layout.addWidget(image_widget, row * 2, col)  # 图片放在偶数行
+                self.image_layout.addWidget(image_widget, row * 2, col)
 
-                # 如果不是第一行，则在前一行下方添加一个高度为5的spacer
+                # 添加行间距（奇数行作为间距）
                 if row > 0:
-                    self.right_layout.addItem(QSpacerItem(0, 3, QSizePolicy.Minimum, QSizePolicy.Fixed), row * 2 - 1, 0,
-                                              1, -1)
+                    self.image_layout.addItem(
+                        QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed),
+                        row * 2 - 1, 0, 1, 3
+                    )
 
-            # 添加一个伸缩因子，将所有内容顶到网格布局的顶部
-            self.right_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding),
-                                      (len(images) * 2 // 3) + 1, 0)
+            except Exception as e:
+                print(f"加载图片失败 [{img_path}]: {str(e)}")
 
-            # 如果没有图片或只有一行图片，也需要在底部添加间隔
-            if len(images) == 0 or len(images) <= 3:
-                self.right_layout.addItem(QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed), 1, 0, 1, -1)
+        # 添加底部伸缩空间
+        total_rows = (len(current_page_paths) + 2) // 3 * 2
+        self.image_layout.setRowStretch(total_rows, 1)
+
+        # 更新分页按钮状态
+        self.prev_page_button.setEnabled(self.current_page > 0)
+        self.next_page_button.setEnabled(end_index < len(self.image_paths))
+
+        # 更新页码信息
+        self.update_page_info_label()
+
+    def prev_page(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.display_images()
+
+    def next_page(self):
+        end_index = (self.current_page + 1) * self.page_size
+        if end_index < len(self.image_paths):
+            self.current_page += 1
+            self.display_images()
+
+    def go_to_page(self):
+        try:
+            page = int(self.page_input.text()) - 1
+            total_pages = len(self.image_paths) // self.page_size + (
+                1 if len(self.image_paths) % self.page_size != 0 else 0)
+            if 0 <= page < total_pages:
+                self.current_page = page
+                self.display_images()
+        except ValueError:
+            pass
+
+    def show_placeholder(self, message="请先选择图片文件"):
+        """显示提示信息"""
+        # 清空布局
+        while self.image_layout.count():
+            item = self.image_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # 创建占位标签
+        label = QLabel(message)
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("font-size: 16px; color: #666;")
+
+        # 将标签添加到布局中心
+        self.image_layout.addWidget(label, 0, 0, Qt.AlignCenter)
 
     def image_clicked(self, path):
-        # 当图片被点击时输出路径
-        print(f"图片 {path}被点击")
+        """图片点击事件"""
+        print(f"图片被点击: {path}")
 
+    def update_page_info_label(self):
+        total_pages = len(self.image_paths) // self.page_size + (
+            1 if len(self.image_paths) % self.page_size != 0 else 0)
+        self.page_info_label.setText(f"当前页: {self.current_page + 1} / 总页数: {total_pages}")
 
